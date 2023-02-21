@@ -3,6 +3,14 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+///[B4.3] Call when open App again
+@pragma('vm:entry-point')
+Future<void> onBackgroundMessage(RemoteMessage message) async {
+  //Background have to higher order function ??? (Cause???)
+  print(
+      'Type Message :: onBackgroundMessage Open ${message.notification.runtimeType}');
+}
+
 ///[B1.0] Create a SingleTon Pattern for Push notification
 class PushNotification {
   PushNotification._();
@@ -42,6 +50,7 @@ class PushNotification {
       sound: true,
     );
     await FirebaseMessaging.instance.getInitialMessage();
+    //Setting Foreground For IOS
     await FirebaseMessaging.instance
         .setForegroundNotificationPresentationOptions(
       alert: true, // Required to display a heads up notification
@@ -50,7 +59,7 @@ class PushNotification {
     );
 
     ///[B3.0] Use package [flutter_local_notifications] to create channel to display Notification
-    ///in when open App for Android.
+    ///in when open App for Android (Foreground).
     _instancePlatformAndroid();
 
     FirebaseMessaging.onMessage.listen(_onMessage);
@@ -78,6 +87,7 @@ class PushNotification {
   ///[B4.0] Create Function Listen Message
   ///[B4.1] Foreground messages Function:
   Future<void> _onMessage(RemoteMessage message) async {
+    //[B3.5] Create To Foreground for Android PlatForm
     RemoteNotification? notification = message.notification;
 
     AndroidNotification? android = message.notification?.android;
@@ -105,16 +115,10 @@ class PushNotification {
     }
   }
 
+  ///[B4.2] Call when open App again
   void _onMessageOpenedApp(RemoteMessage message) async {
+    ///
     print('Type Message :: onMessageOpenedApp Open');
     print("onMessageOpenedApp: ${message.messageId}");
   }
-
-  _pushLocalNotification() {}
-}
-
-@pragma('vm:entry-point')
-Future<void> onBackgroundMessage(RemoteMessage message) async {
-  print(
-      'Type Message :: onBackgroundMessage Open ${message.notification.runtimeType}');
 }
