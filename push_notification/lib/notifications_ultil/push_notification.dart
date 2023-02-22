@@ -1,19 +1,36 @@
+import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import '../page/notification_page.dart';
+
+///Push Notification contain:
+///[B1] Create class Push Notification
+///[B2] Create Function initial to install firebase and setting notification
+///[B3] Setting push notification foreground for android Platform
+///[B4] Create function handle when receive notification from Firebase.
+///[B5] Navigate to any page when tap Notification.
 
 ///[B4.3] Call when open App again
 @pragma('vm:entry-point')
 Future<void> onBackgroundMessage(RemoteMessage message) async {
   //Background have to higher order function ??? (Cause???)
-  print(
-      'Type Message :: onBackgroundMessage Open ${message.notification.runtimeType}');
+  print('Type Message :: onBackgroundMessage Open ${jsonEncode(message.data)}');
 }
 
 ///[B1.0] Create a SingleTon Pattern for Push notification
 class PushNotification {
   PushNotification._();
+  //[B5.1] declare Argument BuildContext
+  static BuildContext? _context;
+
+  //[B5.2] create Setter for BuildContext and use it at first page to context != null
+  static void setContext(BuildContext context) =>
+      PushNotification._context = context;
 
   ///[B1.1] instance factory
   factory PushNotification() => _instance;
@@ -25,7 +42,8 @@ class PushNotification {
   FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 
   ///[B3.1] Create new AndroidNotificationChannel for android Platform
-  ///It
+  ///in app can more than a channel, for each channel will push for diffrent Notification
+  ///it will show up in setting app in part Other of Notification setting
   final AndroidNotificationChannel channel = const AndroidNotificationChannel(
     'high_importance_channel',
     'High Importance Notifications',
@@ -61,6 +79,7 @@ class PushNotification {
     ///[B3.0] Use package [flutter_local_notifications] to create channel to display Notification
     ///in when open App for Android (Foreground).
     _instancePlatformAndroid();
+    getToken();
 
     FirebaseMessaging.onMessage.listen(_onMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(_onMessageOpenedApp);
@@ -111,14 +130,33 @@ class PushNotification {
             icon: android?.smallIcon ?? '',
           ),
         ),
+        payload: jsonEncode(message.data),
       );
     }
   }
 
   ///[B4.2] Call when open App again
   void _onMessageOpenedApp(RemoteMessage message) async {
-    ///
+    //[B5.3] Call Function navigate when openApp
+    navigate(message, _context);
     print('Type Message :: onMessageOpenedApp Open');
     print("onMessageOpenedApp: ${message.messageId}");
+  }
+
+  ///[Get Token]
+  Future<String> getToken() async {
+    var tokenFCM = await firebaseMessaging.getToken();
+    log('tokenFCM :: $tokenFCM');
+    return Future.value(tokenFCM);
+  }
+
+  //[B5.0] Create Function navigator
+  void navigate(RemoteMessage message, BuildContext? context) {
+    Navigator.push(
+      context!,
+      MaterialPageRoute(
+        builder: (BuildContext context) => const NotificationPage(),
+      ),
+    );
   }
 }

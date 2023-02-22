@@ -15,11 +15,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     _initial();
+
     super.initState();
   }
 
   void _initial() async {
     await PushNotification().initial();
+    PushNotification.setContext(context);
   }
 
   void _incrementCounter() {
